@@ -1,128 +1,27 @@
-<div class="container">
+<md-toolbar color="primary">
+     CSS optimizer
+</md-toolbar>
 
-
-         <div class="top-bar">
-                <md-form-field class="">
-                        <input mdInput [(ngModel)]="key" placeholder="Tweets by @" value="{{key}}">  
-                        <span id="user-msg"></span>           
-                 </md-form-field>
-                <span>
-                <md-icon>
-                                <i (click)='addKey($event)' class="fa fa-plus-circle" aria-hidden="true"></i>
-                </md-icon>   
-                </span>
-         </div>
-
-        <br/><br/>
-
-        
-         <md-tab-group>
-                     <!-- //// --> 
-                     <ng-container *ngFor="let label of labelList; let i = index">
-
-                        <md-tab *ngIf="label.showLabel">
-                                        <ng-template  md-tab-label>
-                                                        <i aria-hidden="true" class="label-icon-fa" [ngClass]=label.labelClass></i>                                                        
-                                                      {{label.labelName}}
-                                        </ng-template>
-
-                                        <div  class='key-holder'>
-                                        <div *ngFor="let item of keysListAt;">
-                                          <div *ngIf="!label.isShown || item.type === label.labelKey" class='key-holder-key'>
-                                           <div class='key-holder-close'>
-                                              <i class="fa fa-tag" aria-hidden="true" (click)="tagKeys($event,item)"></i>                                
-                                              <i class="fa fa-times" aria-hidden="true" (click)="deleteKeys($event,item)"></i>
-                                           </div>     
-                                           <div  class='key-holder-key-content'>
-                                              <div class="hide tag-selector">
-                                                      
-                                                <div class="tag-selector-holder" *ngFor="let labelInner of labelList;">
-                                                          <a *ngIf="labelInner.isShown" href="#" [ngClass]="item.type === labelInner.labelKey ? 'selected' : ''" (click)="selectedTag($event,labelInner.labelKey,item.key)">                                                                
-                                                                <div class="tag-selector-icon">
-                                                                        <i aria-hidden="true" class={{labelInner.labelClass}}></i></div>
-                                                              <div style="font-size: 12px;">{{labelInner.labelName}}</div>
-                                                           </a>
-                                                </div>
-                                                                     
-                                              </div>        
-                                              <div (click)="showHideTwitterWidget($event,item.key)" [ngClass]="(item.shown)? 'widget-available item-class':'item-class'"
-                                                      >
-                                                                      {{item.key}}
-                                                      </div>  
-                                           </div>  
-                                           </div> 
-                                      </div>
-                                      <span class="no-tweets-by" *ngIf="(label.isShown && totalCountOfEachLabel(label.labelKey))">
-                                              No content under this label tab, Go to <b>Tweets By @</b> tab to add any tweets by to this label.</span>                                      
-                                </div>    
-                      
-                                      </md-tab>
-                                </ng-container>
-                                      <!-- /**** -->
-
-
-                <md-tab>
-                       
-                        <ng-template md-tab-label>
-                                                Manage Label
-                       </ng-template>
-
-                       
-                       <div>
-                        <div>
-                                <br/>
-                                <md-form-field class="">
-                                                <input mdInput [(ngModel)]="labelName" placeholder="Label Name" value="{{labelName}}">  
-                                </md-form-field>
-                                <i  class="fa fa-plus" (click)="addLabel()" aria-hidden="true"></i>   
-                                
-
-                        </div>
-                        <div class="manage-tags">
-                                 <div *ngFor="let label of labelList; let i = index">
-                                        <div class='key-holder-key' *ngIf="label.isShown">
-                                                 <div class='key-holder-close'>
-                                                    <i *ngIf="label.showLabel" class="fa fa-eye" (click)="showHideLabels(label.labelKey)" aria-hidden="true"></i>   
-                                                    <i *ngIf="!label.showLabel" class="fa fa-eye-slash" (click)="showHideLabels(label.labelKey)" aria-hidden="true"></i>                                                   
-                                                    <i *ngIf="label.deleted" class="fa fa-times" aria-hidden="true" (click)="deleteLabels($event,label.labelKey)"></i>
-                                                 </div>     
-                                                 <div  class='key-holder-key-content'>   
-                                                    <div>
-                                                                            {{label.labelName}}
-                                                    </div>  
-                                                 </div>  
-                                                 </div> </div>
-                          </div>      </div>  
-                          <br/>
-                          <span class="no-tweets-by"> 
-                                        <i class="fa fa-eye" aria-hidden="true"></i>|<i class="fa fa-eye-slash" aria-hidden="true"></i>   
-                                        Show or hide <b>Label</b> tab from the list of tabs.
-                        </span>
-                        </md-tab> 
-        </md-tab-group>
-  
-        <br/><br/>
-        <div class="mat-ink-bar" style="visibility: visible; left: 0px; width: 0px;"></div>
-</div>
-<div>        
-        <!-- <a class="twitter-timeline" data-dnt="true" href="https://twitter.com/hashtag/WIN" data-widget-id="908724612095021056">#WIN Tweets</a> -->
-       
-        <div class="devider-line">
-        </div>
-
-        <div class="tweet-holder">
-                        
-                <div class="tweet-holder-box"  [class.hide]="!item.shown" *ngFor="let item of keysListAt; let i = index">
-                 <div><div class="timeline-Header">
-                                        <h1 class="timeline-Header-title u-inlineBlock" data-scribe="element:title">Tweets <span class="timeline-Header-byline" data-scribe="element:byline">by 
-                                         <a class="customisable-highlight" href="https://twitter.com/{{item.key}}" title="‎@{{item.key}}">‎@{{item.key}}</a></span></h1>
-                               </div></div>
-                <div class="tweet-anchor-holder-box" >
-
-                        <a class="twitter-timeline" href="https://twitter.com/{{item.key}}">Tweets by {{item.key}}</a>                                         
-                </div>
-        </div>
-       
+<div class="filter-holder">
+        <md-checkbox [(ngModel)]="minifyStatus" value="{{minifyStatus}}" (ngModelChange)="changeInScriptName()">
+                Minify
+        </md-checkbox>
+        <md-checkbox [(ngModel)]="groupStyle" value="{{groupStyle}}" (ngModelChange)="changeInScriptName()">
+                Group Styles
+        </md-checkbox>
 </div>
 
+<div class='textarea-holder'>
+<div>
+    <textarea value="{{cssStyle}}" [(ngModel)]="cssStyle" (ngModelChange)="changeInScriptName()">
+        test{
+          color: green;
+       }
+    </textarea>
+</div>
 
+<div>
+    <textarea  value="{{cssUpdated}}" [(ngModel)]="cssUpdated">
+    </textarea>
+</div>
+</div>

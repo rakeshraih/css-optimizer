@@ -1,4 +1,3 @@
-import { Label } from './label';
 import { Component , OnInit} from '@angular/core';
 import { Http } from '@angular/http';
 
@@ -6,222 +5,197 @@ import { Subject } from 'rxjs/Subject';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/Rx';
 
-import { Tweet } from './tweet';
-import { TweetService } from './tweet.service';
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
+  cssStyle = '';
+  scriptDetail; string;
+  scripts;
+  scriptsLatest = new Subject<string>();
+  resetObser = new Observable;
+  inputCount = 10;
+  cssUpdated = '';
+  minifyStatus:boolean = false;
+  groupStyle:boolean = true;
 
-    keysListAt: Tweet[];
-    labelList: Label[];
+  constructor(public http: Http) {
+   this.cssStyle = `div{
+    color: green;
+} div{ font-size: 14px;}div{background: green;}
 
-    key = '';
-    labelName = '';
 
-    newSubject = new Subject<string>();
 
-    constructor(private tweetService: TweetService) {
-        this.keysListAt = this.tweetService.getTweetsFromLocalStorage();
-        this.labelList = this.tweetService.getLabelsFromLocalStorage();
-        this.key = 'NASA';
-        this.labelName = 'Tech';
+div{margin: auto;}
 
-    }
+            div{border-radius: 5px;}
 
-    ngOnInit() {
-        const that = this;
-        this.newSubject.subscribe(
-            data => {
+h1{color: green;}
 
-                this.tweetService.setTweetsToLocalStorage(this.keysListAt);
-                (<any>window).twttr = (function (d, s, id) {
-                    let js: any, fjs = d.getElementsByTagName(s)[0],
-                        t = (<any>window).twttr || {};
-                    if (d.getElementById(id)) { return t; }
-                    js = d.createElement(s);
-                    js.id = id;
-                    js.src = 'https://platform.twitter.com/widgets.js';
-                    fjs.parentNode.insertBefore(js, fjs);
-                    t._e = [];
-                    t.ready = function (f: any) {
-                        t._e.push(f);
-                    };
-                    return t;
-                  }(document, 'script', 'twitter-wjs'));
+div{border: none;} span{color: green;}
 
-                 // if ((<any>window).twttr.ready())
-                    (<any>window).twttr.widgets.load();
-                    setTimeout(function() {
-                        that.cleariFrameElements();
-                      }, 1500);
+p{color: green;}
+p{background: green;}`;
+   this.cssUpdated = this.refactorCSS(this.removeUnwantedTexts(this.cssStyle), this.groupStyle);
 
-            },
-            error => alert(error)
-          );
+  }
 
-          setTimeout(function() {
-            that.cleariFrameElements();
-          }, 1000);
+  ngOnInit() {
 
-          setInterval(function() {
-            that.cleariFrameElements();
-          }, 1000);
+  }
 
-          document.addEventListener('click', function(){
-            if (document.querySelector('.fa-tag.hide')) { document.querySelector('.fa-tag.hide').classList.remove('hide');}
-            if (document.querySelector('.item-class.hide')) { document.querySelector('.item-class.hide').classList.remove('hide');}
-            if (document.querySelectorAll('.tag-selector:not(.hide)')[0]) { 
-                document.querySelectorAll('.tag-selector:not(.hide)')[0].classList.add('hide');
-            }
-          });
-    }
+  changeInScriptName() {
+    this.cssUpdated = this.refactorCSS(this.removeUnwantedTexts(this.cssStyle), this.groupStyle);
+  }
 
-    cleariFrameElements() {
-        const iframes = document.querySelectorAll('iframe.twitter-timeline');
-        [].forEach.call(iframes, function(iframe) {
-        // do whatever
-        if (iframe.contentWindow.document.querySelector('.timeline-Header')) {
-            iframe.contentWindow.document.querySelector('.timeline-Header').remove();
+
+
+removeUnwantedTexts(cssString) {
+
+      const allLines = cssString.match(/^.+$/gm);
+      let cleanString = '';
+      let foundCommentedCode = false;
+
+      for ( let line of allLines){
+
+          line = line.trim();
+
+          if (!line || line.match(/\/\*.*\*\//)){
+              continue;
+          }
+
+          if (!foundCommentedCode && line.match(/^(\/\*).*/)){
+             foundCommentedCode = true;
+             continue;
+          }
+
+          if (foundCommentedCode && line.match(/.*$(\*\/)/)){
+              foundCommentedCode = false;
+              continue;
+           }
+
+          if (!foundCommentedCode) { cleanString += line };
+      }
+
+      return cleanString;
+
+  }
+
+refactorCSS(cssString, removeDuplicates) {
+
+          cssString = cssString.trim().replace(/\s+/g, '`').replace(/(?:\r\n|\r|\n)/g, ''); // replacing all the spaces with ` to work on css
+
+          const cssList = cssString.split('}'); // To split entire css string into individual blocks
+          const individualBlockFromFile = [];
+          for ( let each of cssList) {
+              if (each && each.trim() != ' ') {
+                  individualBlockFromFile.push(each+'}'.trim());
+              }
+          }
+
+          const selectorCssMap = {};
+          const allSelectors = [];
+          //console.log(individualBlockFromFile);
+
+          for ( let cssBlock of individualBlockFromFile) { //cssBlock is [.test{color: black;}]
+
+              if (!cssBlock){
+                 continue;
+              }
+              //console.log(cssBlock);
+              const cssSingleSelector = cssBlock.split('{'); //cssSingleSelector = .test
+              if (!cssSingleSelector && cssSingleSelector.length != 2){
+                  continue;
+               }
+              let cssSingleSelectorContent = cssSingleSelector[1].replace('}',''); //cssSingleSelectorContent = color: black;
+              cssSingleSelectorContent = cssSingleSelectorContent.replace(/\s+/g, '').replace(/ +/g, '').replace(/`/g, ' ').trim();
+              cssSingleSelectorContent = cssSingleSelectorContent.split(';'); // cssSingleSelectorContent = [color: black]
+              let selectorArray = cssSingleSelector[0].replace(/\s+/g, '').replace(/ +/g, '').replace(/`/g, ' ').trim().split(',');
+              selectorArray=selectorArray.map(x => x.trim());
+
+              for ( const short of cssSingleSelectorContent) {
+
+                  if (short && short.trim()) {
+
+                      if (selectorCssMap.hasOwnProperty(short.trim())){
+                        const styleArray=selectorCssMap[short.trim()];
+                          selectorArray.push(...styleArray);
+                      }
+
+                      selectorCssMap[short.trim()] = [...new Set(selectorArray)] ;
+
+                      allSelectors.push(...selectorArray);
+                  }
+              }
+          }
+          console.log(selectorCssMap);
+          const uniqueSelectors = [...new Set(allSelectors)];
+
+          const optimizedCSS = !this.groupStyle ? this.listTheDiff(selectorCssMap,uniqueSelectors) : this.getOptimizedCSS(selectorCssMap);
+
+          //console.log(optimizedCSS);
+          console.log(uniqueSelectors);
+
+          return optimizedCSS;
+  }
+
+  listTheDiff(selectorCssMap, uniqueSelectors){
+    const selectorStyleMap = {};
+
+      for (const selector of uniqueSelectors) {
+        const styleArray = [];
+          for (let key in selectorCssMap) {
+              if (selectorCssMap[key].indexOf(selector) !== -1) {
+                  styleArray.push(key);
+              }
+          }
+          selectorStyleMap[selector] = styleArray;
+      }
+      return this.getOptimizedCSSDiff(selectorStyleMap);
+  }
+
+  getOptimizedCSSDiff(selectorStyleMap) {
+      let optimizedCSS = '';
+      for (const key in selectorStyleMap) {
+
+        if (!this.minifyStatus) {
+      optimizedCSS +=
+`${key} {
+          ${selectorStyleMap[key].join(';\n          ')};
+}
+
+`;
+        }else {
+          optimizedCSS += `${key}{${selectorStyleMap[key].join(';')};}`;
         }
-        });
-    }
+      }
 
-    tagKeys(event, key) {
+      optimizedCSS = this.minifyStatus ? optimizedCSS.replace(/: /g,':') : optimizedCSS;
 
-        if (document.querySelector('.fa-tag.hide')) { document.querySelector('.fa-tag.hide').classList.remove('hide');}
-        if (document.querySelector('.item-class.hide')) { document.querySelector('.item-class.hide').classList.remove('hide');}
-        if (document.querySelectorAll('.tag-selector:not(.hide)')[0]) { 
-            document.querySelectorAll('.tag-selector:not(.hide)')[0].classList.add('hide');
-        }
-        event.target.classList.toggle('hide');
-        event.target.parentNode.parentNode.querySelector('.item-class').classList.toggle('hide');
-        event.target.parentNode.parentNode.querySelector('.tag-selector').classList.toggle('hide');
-        event.stopPropagation();
-    }
+      return optimizedCSS;
+  }
 
-    selectedTag(event, type, key) {
-        if (document.querySelector('.fa-tag.hide')) { document.querySelector('.fa-tag.hide').classList.remove('hide');}
-        if (document.querySelector('.item-class.hide')) { document.querySelector('.item-class.hide').classList.remove('hide');}
-        if (document.querySelectorAll('.tag-selector:not(.hide)')[0]) { 
-            document.querySelectorAll('.tag-selector:not(.hide)')[0].classList.add('hide');
-        }
-        
-        for (const tweet of this.keysListAt){
-            if (key === tweet.key) {
-                tweet.type = type;
-            }
-        }
-       
-        event.preventDefault();
-        event.stopPropagation();
-    }
+  getOptimizedCSS(selectorCssMap) {
+  let optimizedCSS = '';
 
-    addKey($event) {
+     for (const key in selectorCssMap) {
+      if (!this.minifyStatus) {
+  optimizedCSS +=
+  `${selectorCssMap[key].join(', ')} {
+          ${key};
+  }
 
-       const index = this.keysListAt.findIndex(i => i.key.toLowerCase() === this.key.toLowerCase());
+  `;
+     }else {
+      optimizedCSS += `${selectorCssMap[key].join(', ')}{${key};}`;
+     }
+      }
 
-       setTimeout(function() {
-        document.getElementById('user-msg').innerText = '';
-      }, 3000);
+      optimizedCSS = this.minifyStatus ? optimizedCSS.replace(/: /g, ':') : optimizedCSS;
 
-       if ( index !== -1) {
-           document.getElementById('user-msg').innerText = this.key + ' is already added, avilabel under \'Tweets by @\'  tab.';
-           return;
-       }
-
-       if (!this.key || this.key.trim() === '') {
-        return;
-       }
-      // this.keysListAt.push(this.key);
-       const newTweet = new Tweet();
-       newTweet.key = this.key;
-       newTweet.shown = true;
-       newTweet.type = 'other';
-
-       this.keysListAt.push(newTweet);
-       this.key = '';
-       this.newSubject.next(this.key);
-       $event.stopPropagation();
-    }
-
-    addLabel() {
-        const index = this.labelList.findIndex(i => i.labelName.toLowerCase() === this.labelName.toLowerCase());
-        if ( index !== -1) {
-            return;
-        }
-
-        const localLable = new Label();
-        localLable.labelKey = this.labelName.toLowerCase();
-        localLable.isShown = true;
-        localLable.showLabel = true;
-        localLable.labelClass = 'fa fa-star';
-        localLable.labelName = this.labelName;
-        localLable.deleted = true;
-        this.labelList.push(localLable);
-
-        this.tweetService.setLabelsToLocalStorage(this.labelList);
-        this.labelName = '';
-    }
-
-    deleteKeys($event, key) {
-
-        const index = this.keysListAt.findIndex(i => i.key === key.key);
-        this.keysListAt.splice(index, 1);
-
-        this.newSubject.next(this.key);
-        $event.stopPropagation();
-    }
-
-    showHideLabels(labelType) {
-
-        for (const label of this.labelList){
-            if (labelType === label.labelKey) {
-                label.showLabel = !label.showLabel;
-            }
-        }
-
-        this.tweetService.setLabelsToLocalStorage(this.labelList);
-        event.preventDefault();
-        event.stopPropagation();
-    }
-
-    deleteLabels($event, labelKey) {
-
-        const index = this.labelList.findIndex(i => i.labelKey === labelKey);
-
-        for (const tweet of this.keysListAt){
-            if (labelKey.toLowerCase() === tweet.type) {
-                tweet.type = 'other';
-            }
-        }
-        this.labelList.splice(index, 1);
-        this.tweetService.setLabelsToLocalStorage(this.labelList);
-        $event.stopPropagation();
-    }
-
-    showHideTwitterWidget(event, key) {
-
-        for (const tweet of this.keysListAt){
-            if (key === tweet.key) {
-                tweet.shown = !tweet.shown;
-            }
-        }
-        this.newSubject.next(this.key);
-    }
-
-    totalCountOfEachLabel(key) {
-        let count = 0 ;
-        for (const tweet of this.keysListAt){
-            if (key === tweet.type) {
-                count++;
-            }
-        }
-
-      return count === 0 ? true : false;
-    }
+      return optimizedCSS;
+  }
 
 }

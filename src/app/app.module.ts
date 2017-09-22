@@ -7,7 +7,6 @@ import { AppComponent } from './app.component';
 import { MaterialModule } from '@angular/material';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import { HttpModule } from '@angular/http';
-import { TweetService } from './tweet.service';
 
 @NgModule({
   declarations: [
@@ -20,7 +19,7 @@ import { TweetService } from './tweet.service';
     FormsModule,
     HttpModule
   ],
-  providers: [TweetService],
+  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
